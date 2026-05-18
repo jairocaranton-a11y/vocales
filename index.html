@@ -44,7 +44,7 @@ body {
 
 /* ── MUSIC BUTTON ── */
 .music-btn {
-  position: fixed; top:14px; right:14px;
+  position: fixed; bottom:14px; right:14px;
   width:60px; height:60px; border-radius:50%;
   border:4px solid white;
   background:rgba(255,255,255,.92);
@@ -488,16 +488,17 @@ function scheduleTune() {
 }
 
 function toggleMusic(e) {
-  if (!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
-  if (ctx.state==='suspended') ctx.resume();
   playing = !playing;
   const btn = document.getElementById('musicBtn');
   if (playing) {
+    if (!ctx || ctx.state === 'closed') ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     btn.textContent='🔊'; btn.classList.add('playing');
     scheduleTune();
   } else {
     btn.textContent='🎵'; btn.classList.remove('playing');
     clearTimeout(loopTimer);
+    if (ctx) { ctx.close(); ctx = null; }
   }
   burst(e.clientX, e.clientY, 10);
 }
