@@ -465,27 +465,24 @@ document.querySelectorAll('.vowel-card').forEach(card => {
 // ── BACKGROUND MUSIC ─────────────────────────────────
 let ctx = null, playing = false, loopTimer = null;
 
-// Canción de las vocales: cada vocal en su nota, luego escala A-E-I-O-U
+// Canción de las vocales — melodía cantable, tipo xilófono
+// "La A" (do-do-mi) · "la E" (mi-mi-sol) · "la I" (sol-sol-la)
+// "la O" (la-la-sol) · "la U" (sol-mi-do) · coro A-E-I-O-U
 const VOCALES_SONG = [
-  // A (do-mi-sol) × 2
-  ['C5',.28],['E5',.28],['G5',.44],['R',.1],
-  ['C5',.28],['E5',.28],['G5',.44],['R',.12],
-  // E (re-fa-la) × 2
-  ['D5',.28],['F5',.28],['A5',.44],['R',.1],
-  ['D5',.28],['F5',.28],['A5',.44],['R',.12],
-  // I (mi-sol-la) × 2
-  ['E5',.28],['G5',.28],['A5',.44],['R',.1],
-  ['E5',.28],['G5',.28],['A5',.44],['R',.12],
-  // O (fa-la-sol) × 2
-  ['F5',.28],['A5',.28],['G5',.44],['R',.1],
-  ['F5',.28],['A5',.28],['G5',.44],['R',.12],
-  // U (sol-la-sol) × 2
-  ['G5',.28],['A5',.28],['G5',.44],['R',.1],
-  ['G5',.28],['A5',.28],['G5',.44],['R',.2],
-  // Coro: A-E-I-O-U subiendo
-  ['C5',.22],['D5',.22],['E5',.22],['F5',.22],['G5',.22],['A5',.44],['R',.12],
-  // Coro: A-E-I-O-U bajando
-  ['A5',.22],['G5',.22],['F5',.22],['E5',.22],['D5',.22],['C5',.65],['R',.5],
+  // — A —
+  ['C5',.32],['C5',.32],['E5',.52],['R',.12],
+  // — E —
+  ['E5',.32],['E5',.32],['G5',.52],['R',.12],
+  // — I —
+  ['G5',.32],['G5',.32],['A5',.52],['R',.12],
+  // — O —
+  ['A5',.32],['A5',.32],['G5',.52],['R',.12],
+  // — U —
+  ['G5',.32],['E5',.32],['C5',.62],['R',.22],
+  // Coro: A - E - I - O - U  (subiendo)
+  ['C5',.24],['D5',.24],['E5',.24],['F5',.24],['G5',.24],['A5',.55],['R',.16],
+  // Coro: U - O - I - E - A  (bajando)
+  ['A5',.24],['G5',.24],['F5',.24],['E5',.24],['D5',.24],['C5',.75],['R',.55],
 ];
 
 const FREQ = {
@@ -493,22 +490,22 @@ const FREQ = {
   C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880,B5:987.77,
 };
 
+function playNote(freq, t, dur) {
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.18, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.85);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t); osc.stop(t + dur);
+}
+
 function scheduleTune() {
   if (!playing || !ctx) return;
   let t = ctx.currentTime + .04;
   VOCALES_SONG.forEach(([n, d]) => {
-    if (n !== 'R') {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = FREQ[n];
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(.13, t+.035);
-      gain.gain.setValueAtTime(.10, t+d-.06);
-      gain.gain.linearRampToValueAtTime(0, t+d);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(t); osc.stop(t+d);
-    }
+    if (n !== 'R') playNote(FREQ[n], t, d);
     t += d;
   });
   const total = VOCALES_SONG.reduce((s,[,d])=>s+d,0);
