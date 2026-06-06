@@ -337,15 +337,18 @@ let bestVoice = null;
 
 function pickBestVoice() {
   const voices = synth.getVoices();
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const es = voices.filter(v => v.lang.startsWith('es'));
-  // Prefer neural/natural voices (Microsoft Online, Google)
-  const priority = [
-    v => /natural/i.test(v.name),
-    v => /online/i.test(v.name),
-    v => /google/i.test(v.name),
-    v => /microsoft/i.test(v.name),
-    v => true,
-  ];
+  const priority = isIOS
+    ? [ v => /paulina/i.test(v.name),
+        v => /m[oó]nica/i.test(v.name),
+        v => /jorge/i.test(v.name),
+        v => true ]
+    : [ v => /natural/i.test(v.name),
+        v => /online/i.test(v.name),
+        v => /google/i.test(v.name),
+        v => /microsoft/i.test(v.name),
+        v => true ];
   for (const fn of priority) {
     const found = es.find(fn);
     if (found) { bestVoice = found; break; }
@@ -408,7 +411,7 @@ const anGrid    = document.getElementById('animalsGrid');
 let currentVowel = null;
 
 modalVow.addEventListener('click', () => {
-  if (currentVowel) { playDing(''); setTimeout(() => speak(currentVowel, .55, 1.3), 200); }
+  if (currentVowel) { playDing(''); setTimeout(() => speak(currentVowel.toLowerCase(), .55, 1.3), 200); }
 });
 
 function openModal(vowel, ev) {
@@ -439,7 +442,7 @@ function openModal(vowel, ev) {
 
   // Play vowel sound: short ding then say the vowel
   playDing(d.color);
-  setTimeout(() => speak(vowel, .55, 1.3), 280);
+  setTimeout(() => speak(vowel.toLowerCase(), .55, 1.3), 280);
 }
 
 function closeModal() {
@@ -517,9 +520,8 @@ function toggleMusic(e) {
   const btn = document.getElementById('musicBtn');
   if (playing) {
     if (!ctx || ctx.state === 'closed') ctx = new (window.AudioContext||window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
     btn.textContent='🔊'; btn.classList.add('playing');
-    scheduleTune();
+    ctx.resume().then(() => scheduleTune());
   } else {
     btn.textContent='🎵'; btn.classList.remove('playing');
     clearTimeout(loopTimer);
