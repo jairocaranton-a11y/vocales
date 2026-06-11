@@ -391,7 +391,7 @@ const anGrid    = document.getElementById('animalsGrid');
 let currentVowel = null;
 
 modalVow.addEventListener('click', () => {
-  if (currentVowel) { if (navigator.vibrate) navigator.vibrate(40); playDing(''); setTimeout(() => speak(currentVowel.toLowerCase(), .38, 1.2), 200); }
+  if (currentVowel) { if (navigator.vibrate) navigator.vibrate(150); playDing(''); setTimeout(() => speak(currentVowel.toLowerCase(), .38, 1.2), 200); }
 });
 
 function openModal(vowel, ev) {
@@ -409,7 +409,7 @@ function openModal(vowel, ev) {
       <span class="animal-emoji ${it.a}" style="animation-delay:${i*.15}s">${it.e}</span>
       <span class="animal-name">${it.n}</span>`;
     card.addEventListener('click', ev2 => {
-      if (navigator.vibrate) navigator.vibrate(40);
+      if (navigator.vibrate) navigator.vibrate(150);
       speak(it.n, 0.72);
       card.style.background = d.color + '22';
       card.style.borderColor = d.color;
@@ -437,7 +437,7 @@ document.getElementById('modalClose').addEventListener('click', closeModal);
 // ── VOWEL CARDS ───────────────────────────────────────
 document.querySelectorAll('.vowel-card').forEach(card => {
   card.addEventListener('click', e => {
-    if (navigator.vibrate) navigator.vibrate(60);
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
     ripple(card, e);
     burst(e.clientX, e.clientY, 32);
     setTimeout(() => openModal(card.dataset.vowel, e), 120);
