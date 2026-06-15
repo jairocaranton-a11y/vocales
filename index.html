@@ -420,15 +420,23 @@ document.getElementById('modalClose').addEventListener('click', closeModal);
 
 // ── VOWEL CARDS ───────────────────────────────────────
 document.querySelectorAll('.vowel-card').forEach(card => {
+  // touchstart: respuesta inmediata sin esperar el click (~300ms más rápido)
+  card.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    ripple(card, e);
+    burst(t.clientX, t.clientY, 32);
+    openModal(card.dataset.vowel, e);
+  }, {passive: false});
+
+  // click: fallback para desktop
   card.addEventListener('click', e => {
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
     ripple(card, e);
     burst(e.clientX, e.clientY, 32);
-    setTimeout(() => openModal(card.dataset.vowel, e), 120);
+    openModal(card.dataset.vowel, e);
   });
-  card.addEventListener('touchstart', e => {
-    ripple(card, e);
-  }, {passive:true});
 });
 
 // ── BACKGROUND MUSIC ─────────────────────────────────
