@@ -418,6 +418,17 @@ function closeModal() {
 overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 document.getElementById('modalClose').addEventListener('click', closeModal);
 
+// Swipe hacia abajo para cerrar el modal
+const modalBox = document.querySelector('.modal-box');
+let swipeStartY = 0;
+modalBox.addEventListener('touchstart', e => {
+  swipeStartY = e.touches[0].clientY;
+}, {passive: true});
+modalBox.addEventListener('touchend', e => {
+  const dy = e.changedTouches[0].clientY - swipeStartY;
+  if (dy > 80) closeModal();
+}, {passive: true});
+
 // ── VOWEL CARDS ───────────────────────────────────────
 document.querySelectorAll('.vowel-card').forEach(card => {
   // touchstart: respuesta inmediata sin esperar el click (~300ms más rápido)
