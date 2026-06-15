@@ -76,6 +76,11 @@ body {
   overflow:hidden;
 }
 .vowel-card:active { transform:scale(.88) !important; box-shadow:0 3px 12px rgba(0,0,0,.22); }
+@keyframes tapFlash {
+  0%   { transform:scale(1.1);  filter:brightness(1.5); }
+  100% { transform:scale(1);    filter:brightness(1); }
+}
+.vowel-card.tapped { animation:tapFlash .35s ease-out; }
 
 .v-upper { font-size:clamp(3.8rem,10vw,6rem); font-weight:900; color:white; text-shadow:3px 3px 0 rgba(0,0,0,.15); line-height:1; }
 .v-lower { font-size:clamp(2.4rem,6vw,3.5rem); font-weight:700; color:rgba(255,255,255,.82); line-height:1; }
@@ -436,6 +441,8 @@ document.querySelectorAll('.vowel-card').forEach(card => {
     e.preventDefault();
     const t = e.touches[0];
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    card.classList.add('tapped');
+    card.addEventListener('animationend', () => card.classList.remove('tapped'), {once:true});
     ripple(card, e);
     burst(t.clientX, t.clientY, 32);
     openModal(card.dataset.vowel, e);
