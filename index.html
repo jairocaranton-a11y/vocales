@@ -35,11 +35,6 @@ body {
   color: white;
   text-shadow: 3px 3px 0 rgba(0,0,0,.18), 0 0 30px rgba(255,255,255,.5);
   display: inline-block;
-  animation: titleWobble 2.5s ease-in-out infinite;
-}
-@keyframes titleWobble {
-  0%,100% { transform: rotate(-2deg) scale(1); }
-  50%      { transform: rotate(2deg)  scale(1.05); }
 }
 
 /* ── MUSIC BUTTON ── */
@@ -69,29 +64,18 @@ body {
 
 .vowel-card {
   position:relative;
-  width: clamp(118px,22vw,168px);
-  height:clamp(138px,25vw,188px);
+  width: clamp(130px,24vw,180px);
+  height:clamp(150px,27vw,200px);
   border-radius:32px;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   cursor:pointer; user-select:none;
   -webkit-tap-highlight-color:transparent;
   box-shadow:0 8px 28px rgba(0,0,0,.22), 0 0 0 5px rgba(255,255,255,.28);
-  transition:box-shadow .15s;
+  transition:transform .12s, box-shadow .12s;
   overflow:hidden;
-  animation:cardFloat 3s ease-in-out infinite;
 }
-.vowel-card:nth-child(1){animation-delay:0s}
-.vowel-card:nth-child(2){animation-delay:.25s}
-.vowel-card:nth-child(3){animation-delay:.5s}
-.vowel-card:nth-child(4){animation-delay:.75s}
-.vowel-card:nth-child(5){animation-delay:1s}
-
-@keyframes cardFloat {
-  0%,100%{transform:translateY(0)}
-  50%    {transform:translateY(-9px)}
-}
-.vowel-card:active { transform:scale(.9) !important; }
+.vowel-card:active { transform:scale(.88) !important; box-shadow:0 3px 12px rgba(0,0,0,.22); }
 
 .v-upper { font-size:clamp(3.8rem,10vw,6rem); font-weight:900; color:white; text-shadow:3px 3px 0 rgba(0,0,0,.15); line-height:1; }
 .v-lower { font-size:clamp(2.4rem,6vw,3.5rem); font-weight:700; color:rgba(255,255,255,.82); line-height:1; }
@@ -531,20 +515,6 @@ function playDing(hexColor) {
   });
 }
 
-// ── FLOATING BG STARS ─────────────────────────────────
-const bgEl = document.getElementById('bgStars');
-for (let i=0; i<18; i++) {
-  const s = document.createElement('div');
-  s.className = 'bg-star';
-  const sz = 4 + Math.random()*9;
-  s.style.cssText = `
-    width:${sz}px; height:${sz}px;
-    left:${Math.random()*100}%;
-    animation-duration:${9+Math.random()*14}s;
-    animation-delay:-${Math.random()*22}s;
-  `;
-  bgEl.appendChild(s);
-}
 </script>
 </body>
 </html>
