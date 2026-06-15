@@ -460,24 +460,25 @@ document.querySelectorAll('.vowel-card').forEach(card => {
 // ── BACKGROUND MUSIC ─────────────────────────────────
 let ctx = null, playing = false, loopTimer = null;
 
-// Canción de las vocales — melodía cantable, tipo xilófono
-// "La A" (do-do-mi) · "la E" (mi-mi-sol) · "la I" (sol-sol-la)
-// "la O" (la-la-sol) · "la U" (sol-mi-do) · coro A-E-I-O-U
+// Canción de las vocales — basada en "Salió la A, no sé a dónde va"
+// Melodía infantil tradicional, tono cálido y cantable
 const VOCALES_SONG = [
-  // — A —
-  ['C5',.32],['C5',.32],['E5',.52],['R',.12],
-  // — E —
-  ['E5',.32],['E5',.32],['G5',.52],['R',.12],
-  // — I —
-  ['G5',.32],['G5',.32],['A5',.52],['R',.12],
-  // — O —
-  ['A5',.32],['A5',.32],['G5',.52],['R',.12],
-  // — U —
-  ['G5',.32],['E5',.32],['C5',.62],['R',.22],
+  // "Sa-lió la A, sa-lió la A"
+  ['G4',.26],['G4',.26],['A4',.40],['R',.08],
+  ['G4',.26],['G4',.26],['A4',.40],['R',.12],
+  // "no sé a dón-de va"
+  ['B4',.26],['A4',.26],['G4',.26],['A4',.26],['G4',.50],['R',.10],
+  // "no sé a dón-de va"
+  ['B4',.26],['A4',.26],['G4',.26],['F4',.26],['E4',.56],['R',.22],
+  // Eco más alto (segunda estrofa)
+  ['C5',.26],['C5',.26],['D5',.40],['R',.08],
+  ['C5',.26],['C5',.26],['D5',.40],['R',.12],
+  ['E5',.26],['D5',.26],['C5',.26],['D5',.26],['C5',.50],['R',.10],
+  ['E5',.26],['D5',.26],['C5',.26],['B4',.26],['C5',.56],['R',.26],
   // Coro: A - E - I - O - U  (subiendo)
-  ['C5',.24],['D5',.24],['E5',.24],['F5',.24],['G5',.24],['A5',.55],['R',.16],
-  // Coro: U - O - I - E - A  (bajando)
-  ['A5',.24],['G5',.24],['F5',.24],['E5',.24],['D5',.24],['C5',.75],['R',.55],
+  ['C5',.28],['D5',.28],['E5',.28],['F5',.28],['G5',.28],['A5',.58],['R',.16],
+  // Coro: U - O - I - E - A  (bajando, cierre)
+  ['A5',.28],['G5',.28],['F5',.28],['E5',.28],['D5',.28],['C5',.80],['R',.60],
 ];
 
 const FREQ = {
@@ -488,10 +489,11 @@ const FREQ = {
 function playNote(freq, t, dur) {
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = 'sine';
+  osc.type = 'triangle';
   osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0.18, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.85);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(0.20, t + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9);
   osc.connect(gain); gain.connect(ctx.destination);
   osc.start(t); osc.stop(t + dur);
 }
