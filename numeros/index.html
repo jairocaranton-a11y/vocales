@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🔢 Los Números de Bebé 🔢</title>
+
+<!-- PWA: instalable con ícono en el celular -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4fc3f7">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Números">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(45deg, #a1c4fd, #c2e9fb, #d4fc79, #ffecd2, #fbc2eb);
+  background-size: 400% 400%;
+  animation: gradShift 12s ease infinite;
+  overflow-x: hidden;
+}
+
+@keyframes gradShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* ── HEADER ── */
+.header {
+  text-align: center;
+  padding: 14px 12px 4px;
+}
+.title {
+  font-size: clamp(1.6rem, 7vw, 3rem);
+  white-space: nowrap;
+  color: white;
+  text-shadow: 3px 3px 0 rgba(0,0,0,.18), 0 0 30px rgba(255,255,255,.5);
+  display: inline-block;
+}
+
+/* ── MUSIC BUTTON ── */
+.music-btn {
+  position: fixed; bottom:14px; right:14px;
+  width:60px; height:60px; border-radius:50%;
+  border:4px solid white;
+  background:rgba(255,255,255,.92);
+  font-size:1.8rem; cursor:pointer; z-index:1000;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.music-btn:active { transform:scale(.88); }
+.music-btn.playing { animation: spinBtn 4s linear infinite; }
+@keyframes spinBtn { to { transform:rotate(360deg); } }
+
+/* ── NUMBER CARDS ── */
+.numbers-wrap {
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:clamp(10px,2.5vw,22px);
+  padding:clamp(10px,2.5vw,22px) clamp(14px,4vw,40px) 86px;
+  max-width:1100px; margin:0 auto;
+}
+@media (min-width:700px) {
+  .numbers-wrap { grid-template-columns:repeat(5, 1fr); padding-bottom:40px; }
+}
+
+.num-card {
+  position:relative;
+  height:clamp(96px, calc((100vh - 190px) / 5), 200px);
+  border-radius:28px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 8px 28px rgba(0,0,0,.22), 0 0 0 5px rgba(255,255,255,.28);
+  transition:transform .12s, box-shadow .12s;
+  overflow:hidden;
+}
+@media (min-width:700px) {
+  .num-card { height:clamp(150px, calc((100vh - 170px) / 2), 230px); }
+}
+.num-card:active { transform:scale(.88) !important; box-shadow:0 3px 12px rgba(0,0,0,.22); }
+@keyframes tapFlash {
+  0%   { transform:scale(1.1);  filter:brightness(1.5); }
+  100% { transform:scale(1);    filter:brightness(1); }
+}
+.num-card.tapped { animation:tapFlash .35s ease-out; }
+
+.n-digit { font-size:clamp(3.2rem,11vw,6rem); font-weight:900; color:white; text-shadow:3px 3px 0 rgba(0,0,0,.15); line-height:1; }
+.n-word  { font-size:clamp(1rem,3.5vw,1.5rem); font-weight:700; color:rgba(255,255,255,.9); line-height:1.1; }
+
+.num-card::after {
+  content:'✨'; position:absolute; top:8px; right:10px; font-size:1.1rem;
+  animation:twinkleCard 2s ease-in-out infinite;
+}
+@keyframes twinkleCard {
+  0%,100%{opacity:.5;transform:scale(.8) rotate(0deg)}
+  50%    {opacity:1; transform:scale(1.3) rotate(20deg)}
+}
+
+/* Ripple */
+.ripple {
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,.38);
+  pointer-events:none;
+  animation:rippleGrow .6s ease-out forwards;
+}
+@keyframes rippleGrow {
+  from{transform:scale(0);opacity:1}
+  to  {transform:scale(5);opacity:0}
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);
+  z-index:500;
+  display:flex; align-items:center; justify-content:center;
+  padding:14px;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+
+.modal-box {
+  background:#fff; border-radius:36px;
+  padding:22px 16px 26px;
+  width:100%; max-width:520px;
+  max-height:calc(100vh - 28px);
+  overflow:hidden; position:relative;
+  transform:scale(.65) translateY(60px);
+  transition:transform .42s cubic-bezier(.175,.885,.32,1.275);
+  box-shadow:0 24px 70px rgba(0,0,0,.32);
+}
+.modal-overlay.open .modal-box { transform:scale(1) translateY(0); }
+
+.modal-number {
+  text-align:center; font-size:clamp(3.5rem,13vw,5.5rem);
+  font-weight:900; line-height:1;
+  cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s;
+}
+.modal-number:active { transform:scale(.92); }
+.modal-word {
+  text-align:center; font-size:1.6rem; font-weight:900; margin-bottom:2px;
+}
+.modal-subtitle {
+  text-align:center; font-size:1rem; color:#777; margin-bottom:14px;
+}
+.modal-close {
+  position:absolute; top:12px; right:12px;
+  width:38px; height:38px; border-radius:50%; border:none;
+  background:#ff6b6b; color:white;
+  font-size:1.1rem; font-weight:bold; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .15s;
+}
+.modal-close:active { transform:scale(.82); }
+
+/* ── ITEMS TO COUNT ── */
+.items-grid {
+  display:grid;
+  gap:10px;
+  justify-content:center;
+}
+.count-item {
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+  aspect-ratio:1;
+  border-radius:22px;
+  background:#f8f9fa; cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  border:3px solid transparent;
+  transition:background .25s, border-color .25s, transform .15s;
+}
+.count-item:active { transform:scale(.86); }
+.count-item .emo { display:block; line-height:1; }
+
+.count-badge {
+  position:absolute; top:-8px; right:-8px;
+  min-width:30px; height:30px; padding:0 6px; border-radius:15px;
+  color:white; font-weight:900; font-size:1.1rem;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  transform:scale(0);
+  transition:transform .3s cubic-bezier(.175,.885,.32,1.275);
+}
+.count-item.counted .count-badge { transform:scale(1); }
+
+.again-btn {
+  display:block; margin:16px auto 0;
+  border:none; border-radius:30px;
+  padding:12px 26px;
+  font-family:inherit; font-size:1.2rem; font-weight:900; color:white;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .15s, opacity .3s;
+}
+.again-btn:active { transform:scale(.9); }
+.again-btn.hidden { opacity:0; pointer-events:none; }
+
+/* Item animations */
+.af  { animation:af  2.8s ease-in-out infinite; }
+.ab  { animation:ab  1.0s ease-in-out infinite; }
+.as2 { animation:as2 1.8s ease-in-out infinite; }
+.aw  { animation:aw  1.4s ease-in-out infinite; }
+.ap  { animation:ap  2.2s ease-in-out infinite; }
+
+@keyframes af  { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-10px)} }
+@keyframes ab  { 0%,100%{transform:scaleY(1) translateY(0)} 40%{transform:scaleY(1.15) translateY(-8px)} 60%{transform:scaleY(.9) translateY(0)} }
+@keyframes as2 { 0%,100%{transform:rotate(0)}         25%{transform:rotate(-9deg)} 75%{transform:rotate(9deg)} }
+@keyframes aw  { 0%,100%{transform:rotate(-12deg)}    50%{transform:rotate(12deg)} }
+@keyframes ap  { 0%,100%{transform:scale(1)}           50%{transform:scale(1.18)} }
+
+/* ── CONFETTI ── */
+.cp {
+  position:fixed; pointer-events:none; z-index:9999;
+  border-radius:3px;
+  animation:cpFall linear forwards;
+}
+@keyframes cpFall {
+  0%  { opacity:1; }
+  100%{ transform:translateY(110vh) rotate(720deg); opacity:0; }
+}
+</style>
+</head>
+<body>
+
+<button class="music-btn" id="musicBtn" title="Música">🎵</button>
+
+<div class="header">
+  <span class="title">🔢 ¡Los Números! 🔢</span>
+</div>
+
+<div class="numbers-wrap" id="numbersWrap"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-number" id="modalNumber"></div>
+    <div class="modal-word" id="modalWord"></div>
+    <div class="modal-subtitle" id="modalSubtitle">¡Tócalos para contarlos!</div>
+    <div class="items-grid" id="itemsGrid"></div>
+    <button class="again-btn hidden" id="againBtn">🔁 ¡Otra vez!</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+// w: palabra del número · e: emoji a contar · s/p: singular/plural · a: animación
+const NUMS = [
+  {w:'uno',    e:'🐘', s:'elefante', p:'elefantes', a:'ab',  c1:'#ff6b6b', c2:'#ee5a24'},
+  {w:'dos',    e:'🐱', s:'gatito',   p:'gatitos',   a:'as2', c1:'#fd9644', c2:'#e67e22'},
+  {w:'tres',   e:'🐶', s:'perrito',  p:'perritos',  a:'ab',  c1:'#fed330', c2:'#f7b731'},
+  {w:'cuatro', e:'🐟', s:'pececito', p:'pececitos', a:'aw',  c1:'#26de81', c2:'#20bf6b'},
+  {w:'cinco',  e:'⭐', s:'estrella', p:'estrellas', a:'ap',  c1:'#2bcbba', c2:'#0fb9b1'},
+  {w:'seis',   e:'🍎', s:'manzana',  p:'manzanas',  a:'as2', c1:'#4fc3f7', c2:'#0277bd'},
+  {w:'siete',  e:'🦋', s:'mariposa', p:'mariposas', a:'af',  c1:'#778beb', c2:'#4b6cb7'},
+  {w:'ocho',   e:'🐥', s:'pollito',  p:'pollitos',  a:'ab',  c1:'#b39ddb', c2:'#6c5ce7'},
+  {w:'nueve',  e:'🎈', s:'globo',    p:'globos',    a:'af',  c1:'#f78fb3', c2:'#e84393'},
+  {w:'diez',   e:'🌸', s:'flor',     p:'flores',    a:'ap',  c1:'#a55eea', c2:'#8854d0'},
+];
+
+// Frase completa: "un elefante", "dos gatitos"...
+function phrase(n) {
+  const d = NUMS[n-1];
+  return n === 1 ? `un ${d.s}` : `${d.w} ${d.p}`;
+}
+
+// ── SPEECH ────────────────────────────────────────────
+const synth = window.speechSynthesis;
+let bestVoice = null;
+
+function pickBestVoice() {
+  const voices = synth.getVoices();
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const es = voices.filter(v => v.lang.startsWith('es'));
+  const priority = isIOS
+    ? [ v => /paulina/i.test(v.name),
+        v => /m[oó]nica/i.test(v.name),
+        v => /jorge/i.test(v.name),
+        v => true ]
+    : [ v => /natural/i.test(v.name),
+        v => /online/i.test(v.name),
+        v => /google/i.test(v.name),
+        v => /microsoft/i.test(v.name),
+        v => true ];
+  for (const fn of priority) {
+    const found = es.find(fn);
+    if (found) { bestVoice = found; break; }
+  }
+}
+
+// queue=true: no corta lo que se está diciendo, lo dice a continuación
+function speak(text, rate=0.82, pitch=1.0, queue=false) {
+  if (!queue) synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-ES'; u.rate = rate; u.pitch = pitch; u.volume = 1;
+  if (bestVoice) u.voice = bestVoice;
+  synth.speak(u);
+}
+
+synth.getVoices();
+window.speechSynthesis.onvoiceschanged = () => pickBestVoice();
+pickBestVoice();
+
+// ── CONFETTI ──────────────────────────────────────────
+const COLORS = ['#ff6b6b','#ffd43b','#26de81','#4fc3f7','#a29bfe','#ff922b','#f06595','#74c0fc','#63e6be'];
+
+function burst(cx, cy, n=28) {
+  for (let i=0; i<n; i++) {
+    const el = document.createElement('div');
+    el.className = 'cp';
+    const size = 7 + Math.random()*9;
+    const dx   = (Math.random()-0.5)*220;
+    const dur  = .9 + Math.random()*1.1;
+    el.style.cssText = `
+      left:${cx}px; top:${cy}px;
+      width:${size}px; height:${size}px;
+      background:${COLORS[Math.floor(Math.random()*COLORS.length)]};
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      animation-duration:${dur}s;
+      animation-delay:${Math.random()*.18}s;
+      transform:translate(${dx}px, 0);
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), (dur + .2)*1000);
+  }
+}
+
+// ── RIPPLE ────────────────────────────────────────────
+function ripple(card, e) {
+  const r = card.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  const s = Math.max(r.width, r.height);
+  const rp = document.createElement('div');
+  rp.className = 'ripple';
+  rp.style.cssText = `width:${s}px;height:${s}px;left:${x-s/2}px;top:${y-s/2}px`;
+  card.appendChild(rp);
+  rp.addEventListener('animationend', () => rp.remove());
+}
+
+// ── NUMBER CARDS (pantalla principal) ─────────────────
+const wrap = document.getElementById('numbersWrap');
+NUMS.forEach((d, i) => {
+  const n = i + 1;
+  const card = document.createElement('div');
+  card.className = 'num-card';
+  card.dataset.n = n;
+  card.style.background = `linear-gradient(135deg, ${d.c1}, ${d.c2})`;
+  card.innerHTML = `<span class="n-digit">${n}</span><span class="n-word">${d.w}</span>`;
+  wrap.appendChild(card);
+});
+
+// ── MODAL ────────────────────────────────────────────
+const overlay   = document.getElementById('modalOverlay');
+const modalNum  = document.getElementById('modalNumber');
+const modalWord = document.getElementById('modalWord');
+const modalSub  = document.getElementById('modalSubtitle');
+const itemsGrid = document.getElementById('itemsGrid');
+const againBtn  = document.getElementById('againBtn');
+let currentN = 0;
+let counted  = 0;
+
+// Columnas según cantidad, para que todo quepa en el celular
+const COLS = {1:1, 2:2, 3:3, 4:2, 5:3, 6:3, 7:4, 8:4, 9:3, 10:5};
+
+modalNum.addEventListener('click', () => {
+  if (!currentN) return;
+  if (navigator.vibrate) navigator.vibrate(150);
+  playDing();
+  setTimeout(() => speak(NUMS[currentN-1].w, .5, 1.2), 200);
+});
+
+function buildItems() {
+  const d = NUMS[currentN-1];
+  const cols = COLS[currentN];
+  const boxW = Math.min(window.innerWidth - 60, 488);
+  const cell = Math.min(130, Math.floor((boxW - (cols-1)*10) / cols));
+  itemsGrid.style.gridTemplateColumns = `repeat(${cols}, ${cell}px)`;
+  const emoSize = Math.round(cell * 0.62);
+
+  counted = 0;
+  againBtn.classList.add('hidden');
+  modalSub.textContent = '¡Tócalos para contarlos!';
+  itemsGrid.innerHTML = '';
+
+  for (let i = 0; i < currentN; i++) {
+    const it = document.createElement('div');
+    it.className = 'count-item';
+    it.innerHTML = `
+      <span class="emo ${d.a}" style="font-size:${emoSize}px;animation-delay:${i*.12}s">${d.e}</span>
+      <span class="count-badge" style="background:${d.c2}"></span>`;
+    it.addEventListener('click', ev => countItem(it, ev));
+    itemsGrid.appendChild(it);
+  }
+}
+
+function countItem(it, ev) {
+  const d = NUMS[currentN-1];
+  if (navigator.vibrate) navigator.vibrate(120);
+
+  // Si ya fue contado, repite su número
+  if (it.classList.contains('counted')) {
+    speak(NUMS[it.dataset.k - 1].w, .72);
+    return;
+  }
+
+  counted++;
+  it.dataset.k = counted;
+  it.classList.add('counted');
+  it.querySelector('.count-badge').textContent = counted;
+  it.style.background = d.c1 + '22';
+  it.style.borderColor = d.c1;
+  playNote1(counted);
+  speak(NUMS[counted-1].w, .72);
+  burst(ev.clientX, ev.clientY, 12);
+
+  if (counted === currentN) {
+    // ¡Terminó de contar! Celebración
+    modalSub.textContent = `¡Muy bien! ¡${phrase(currentN)}! 🎉`;
+    setTimeout(() => {
+      speak(`¡Muy bien! ¡${phrase(currentN)}!`, .8, 1.15, true);
+      const r = modalNum.getBoundingClientRect();
+      burst(r.left + r.width/2, r.top + r.height/2, 50);
+      playFanfare();
+      againBtn.classList.remove('hidden');
+    }, 650);
+  }
+}
+
+againBtn.addEventListener('click', () => {
+  if (navigator.vibrate) navigator.vibrate(100);
+  buildItems();
+});
+
+function openModal(n) {
+  const d = NUMS[n-1];
+  currentN = n;
+
+  modalNum.textContent = n;
+  modalNum.style.color = d.c2;
+  modalWord.textContent = d.w;
+  modalWord.style.color = d.c1;
+  againBtn.style.background = `linear-gradient(135deg, ${d.c1}, ${d.c2})`;
+
+  buildItems();
+  overlay.classList.add('open');
+
+  playDing();
+  setTimeout(() => speak(d.w, .5, 1.2), 280);
+}
+
+function closeModal() {
+  overlay.classList.remove('open');
+  synth.cancel();
+}
+
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.getElementById('modalClose').addEventListener('click', closeModal);
+
+// Swipe hacia abajo para cerrar el modal
+const modalBox = document.querySelector('.modal-box');
+let swipeStartY = 0;
+modalBox.addEventListener('touchstart', e => {
+  swipeStartY = e.touches[0].clientY;
+}, {passive: true});
+modalBox.addEventListener('touchend', e => {
+  const dy = e.changedTouches[0].clientY - swipeStartY;
+  if (dy > 80) closeModal();
+}, {passive: true});
+
+// Tarjetas: respuesta inmediata en touchstart, click como fallback de escritorio
+document.querySelectorAll('.num-card').forEach(card => {
+  card.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    card.classList.add('tapped');
+    card.addEventListener('animationend', () => card.classList.remove('tapped'), {once:true});
+    ripple(card, e);
+    burst(t.clientX, t.clientY, 32);
+    openModal(+card.dataset.n);
+  }, {passive: false});
+
+  card.addEventListener('click', e => {
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    ripple(card, e);
+    burst(e.clientX, e.clientY, 32);
+    openModal(+card.dataset.n);
+  });
+});
+
+// ── AUDIO ─────────────────────────────────────────────
+let ctx = null, playing = false, loopTimer = null;
+
+function audio() {
+  if (!ctx || ctx.state === 'closed') ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+const FREQ = {
+  C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,
+  C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880,B5:987.77,
+  C6:1046.5,D6:1174.66,E6:1318.51,
+};
+
+// Canción para contar: sube nota a nota del 1 al 10 y luego baja
+const NUMEROS_SONG = [
+  // "Uno, dos, tres, cuatro, cinco"
+  ['C4',.30],['D4',.30],['E4',.30],['F4',.30],['G4',.50],['R',.12],
+  // "seis, siete, ocho, nueve, diez"
+  ['A4',.30],['B4',.30],['C5',.30],['D5',.30],['E5',.60],['R',.20],
+  // "¡A contar, a contar!"
+  ['E5',.24],['C5',.24],['E5',.24],['G5',.48],['R',.08],
+  ['G5',.24],['E5',.24],['G5',.24],['C6',.60],['R',.20],
+  // Bajando: "diez, nueve, ocho, siete, seis"
+  ['C6',.30],['B5',.30],['A5',.30],['G5',.30],['F5',.50],['R',.12],
+  // "cinco, cuatro, tres, dos, uno"
+  ['E5',.30],['D5',.30],['C5',.30],['B4',.30],['C5',.80],['R',.60],
+];
+
+function playNote(freq, t, dur, vol=0.20, type='triangle') {
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(vol, t + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.9);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t); osc.stop(t + dur);
+}
+
+function scheduleTune() {
+  if (!playing || !ctx) return;
+  let t = ctx.currentTime + .04;
+  NUMEROS_SONG.forEach(([n, d]) => {
+    if (n !== 'R') playNote(FREQ[n], t, d);
+    t += d;
+  });
+  const total = NUMEROS_SONG.reduce((s,[,d])=>s+d,0);
+  loopTimer = setTimeout(scheduleTune, (total-.12)*1000);
+}
+
+function toggleMusic(e) {
+  playing = !playing;
+  const btn = document.getElementById('musicBtn');
+  if (playing) {
+    if (!ctx || ctx.state === 'closed') ctx = new (window.AudioContext||window.webkitAudioContext)();
+    btn.textContent='🔊'; btn.classList.add('playing');
+    ctx.resume().then(() => scheduleTune());
+  } else {
+    btn.textContent='🎵'; btn.classList.remove('playing');
+    clearTimeout(loopTimer);
+    if (ctx) { ctx.close(); ctx = null; }
+  }
+  burst(e.clientX, e.clientY, 10);
+}
+document.getElementById('musicBtn').addEventListener('click', toggleMusic);
+
+// Ding al abrir un número
+function playDing() {
+  audio();
+  [523.25, 659.25, 783.99].forEach((f, i) => {
+    playNote(f, ctx.currentTime + i*.08, .3, .22, 'sine');
+  });
+}
+
+// Una nota que sube con cada objeto contado (escala de Do)
+const SCALE = ['C5','D5','E5','F5','G5','A5','B5','C6','D6','E6'];
+function playNote1(k) {
+  audio();
+  playNote(FREQ[SCALE[k-1]], ctx.currentTime, .25, .18, 'sine');
+}
+
+// Fanfarria al terminar de contar
+function playFanfare() {
+  audio();
+  const t0 = ctx.currentTime;
+  [['C5',0],['E5',.12],['G5',.24],['C6',.36]].forEach(([n, dt]) => {
+    playNote(FREQ[n], t0 + dt, n === 'C6' ? .6 : .2, .2, 'triangle');
+  });
+}
+
+// ── SERVICE WORKER (app instalable + offline) ─────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
